@@ -18,18 +18,18 @@ func New() Cache {
 }
 
 // Set adds a value to the cache.
-func Set(key string, value interface{}) {
-	Cache{}.data[key] = value
+func (c *Cache) Set(key string, value interface{}) {
+	c.data[key] = value
 }
 
 // Get retrieves a value from the cache.
-func Get(key string) interface{} {
+func (c *Cache) Get(key string) interface{} {
 
-	value := Cache{}.data[key]
+	value := c.data[key]
 	return value
 }
 
 // Delete removes a value from the cache.
-func Delete(key string) {
-	delete(Cache{}.data, key)
+func (c *Cache) Delete(key string) {
+	delete(c.data, key)
 }

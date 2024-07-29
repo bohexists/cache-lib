@@ -16,3 +16,20 @@ func New() Cache {
 	// Return the new Cache
 	return result
 }
+
+// Set adds a value to the cache.
+func Set(key string, value interface{}) {
+	Cache{}.data[key] = value
+}
+
+// Get retrieves a value from the cache.
+func Get(key string) interface{} {
+
+	value := Cache{}.data[key]
+	return value
+}
+
+// Delete removes a value from the cache.
+func Delete(key string) {
+	delete(Cache{}.data, key)
+}

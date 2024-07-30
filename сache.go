@@ -33,3 +33,18 @@ func (c *Cache) Get(key string) interface{} {
 func (c *Cache) Delete(key string) {
 	delete(c.data, key)
 }
+
+// Exists checks if a key exists in the cache.
+func (c *Cache) Exists(key string) bool {
+	_, result := c.data[key]
+	return result
+}
+
+// Keys returns a list of all keys in the cache.
+func (c *Cache) Keys() []string {
+	result := make([]string, 0, len(c.data))
+	for key := range c.data {
+		result = append(result, key)
+	}
+	return result
+}

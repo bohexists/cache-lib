@@ -1,9 +1,5 @@
 package cache
 
-import (
-	"errors"
-)
-
 // Cache is a basic in-memory storage for data.
 type Cache struct {
 	data map[string]interface{}
@@ -23,8 +19,8 @@ func New() Cache {
 
 // Set adds a value to the cache.
 func (c *Cache) Set(key string, value interface{}) error {
-	if key == "" {
-		return errors.New("key cannot be empty")
+	if err := validateKey(key); err != nil {
+		return err
 	}
 	c.data[key] = value
 	return nil
@@ -32,23 +28,22 @@ func (c *Cache) Set(key string, value interface{}) error {
 
 // Get retrieves a value from the cache.
 func (c *Cache) Get(key string) (interface{}, error) {
-	if key == "" {
-		return nil, errors.New("key cannot be empty")
+	if err := validateKey(key); err != nil {
+		return nil, err
 	}
-	value, exists := c.data[key]
-	if !exists {
-		return nil, errors.New("key not found in cache")
+	if err := c.checkExistence(key); err != nil {
+		return nil, err
 	}
-	return value, nil
+	return c.data[key], nil
 }
 
 // Delete removes a value from the cache.
 func (c *Cache) Delete(key string) error {
-	if key == "" {
-		return errors.New("key cannot be empty")
+	if err := validateKey(key); err != nil {
+		return err
 	}
-	if _, exists := c.data[key]; !exists {
-		return errors.New("key not found in cache")
+	if err := c.checkExistence(key); err != nil {
+		return err
 	}
 	delete(c.data, key)
 	return nil
@@ -56,8 +51,8 @@ func (c *Cache) Delete(key string) error {
 
 // Exists checks if a key exists in the cache.
 func (c *Cache) Exists(key string) (bool, error) {
-	if key == "" {
-		return false, errors.New("key cannot be empty")
+	if err := validateKey(key); err != nil {
+		return false, err
 	}
 	_, result := c.data[key]
 	return result, nil
@@ -65,9 +60,6 @@ func (c *Cache) Exists(key string) (bool, error) {
 
 // Keys returns a list of all keys in the cache.
 func (c *Cache) Keys() ([]string, error) {
-	if len(c.data) == 0 {
-		return nil, errors.New("cache is empty")
-	}
 	result := make([]string, 0, len(c.data))
 	for key := range c.data {
 		result = append(result, key)

@@ -5,12 +5,12 @@ type Cache struct {
 	data map[string]interface{}
 }
 
-// New creates and returns a new Cache.
-func New() Cache {
+// New creates new Cache.
+func New() *Cache {
 	// Create a variable result
-	result := Cache{}
+	result := &Cache{}
 
-	// Initialize the storage field with an empty map
+	// Initialize the storage
 	result.data = make(map[string]interface{})
 
 	return result
@@ -18,30 +18,29 @@ func New() Cache {
 
 // Set adds a value.
 func (c *Cache) Set(key string, value interface{}) error {
-	if err := validateKey(key); err != nil {
+	err := validateKey(key)
+	if err != nil {
 		return err
 	}
+
 	c.data[key] = value
 	return nil
 }
 
 // Get retrieves a value.
 func (c *Cache) Get(key string) (interface{}, error) {
-	if err := validateKey(key); err != nil {
+	err := validateKey(key)
+	if err != nil {
 		return nil, err
 	}
-	if err := c.checkExistence(key); err != nil {
-		return nil, err
-	}
+
 	return c.data[key], nil
 }
 
 // Delete removes a value.
 func (c *Cache) Delete(key string) error {
-	if err := validateKey(key); err != nil {
-		return err
-	}
-	if err := c.checkExistence(key); err != nil {
+	err := validateKey(key)
+	if err != nil {
 		return err
 	}
 	delete(c.data, key)
@@ -49,12 +48,13 @@ func (c *Cache) Delete(key string) error {
 }
 
 // Exists checks if a key exists.
-func (c *Cache) Exists(key string) (bool, error) {
-	if err := validateKey(key); err != nil {
-		return false, err
+func (c *Cache) Exists(key string) bool {
+	err := validateKey(key)
+	if err != nil {
+		return false
 	}
 	_, result := c.data[key]
-	return result, nil
+	return result
 }
 
 // Keys returns a list of keys.

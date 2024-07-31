@@ -9,11 +9,3 @@ func validateKey(key string) error {
 	}
 	return nil
 }
-
-// checkExistence checks if the key exists.
-func (c *Cache) checkExistence(key string) error {
-	if _, exists := c.data[key]; !exists {
-		return errors.New("key not found")
-	}
-	return nil
-}

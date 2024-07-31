@@ -1,6 +1,9 @@
 package cache
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 // validateKey checks if the key is valid.
 func validateKey(key string) error {
@@ -8,4 +11,8 @@ func validateKey(key string) error {
 		return errors.New("key empty")
 	}
 	return nil
+}
+
+func isExpired(object cacheObject) bool {
+	return time.Now().UnixNano() > object.expired
 }

@@ -1,8 +1,16 @@
 package cache
 
+import "time"
+
 // Cache is a basic in-memory storage for data.
 type Cache struct {
-	data map[string]interface{}
+	data map[string]cacheObject
+}
+
+// cacheObject struct to store value and expiration time.
+type cacheObject struct {
+	value   interface{}
+	expired int64
 }
 
 // New creates new Cache.
@@ -11,19 +19,22 @@ func New() *Cache {
 	result := &Cache{}
 
 	// Initialize the storage
-	result.data = make(map[string]interface{})
+	result.data = make(map[string]cacheObject)
 
 	return result
 }
 
 // Set adds a value.
-func (c *Cache) Set(key string, value interface{}) error {
+func (c *Cache) Set(key string, value interface{}, ttl time.Duration) error {
 	err := validateKey(key)
 	if err != nil {
 		return err
 	}
-
-	c.data[key] = value
+	expired := time.Now().Add(ttl).UnixNano()
+	c.data[key] = cacheObject{
+		value:   value,
+		expired: expired,
+	}
 	return nil
 }
 
@@ -33,8 +44,9 @@ func (c *Cache) Get(key string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	result := c.data[key]
 
-	return c.data[key], nil
+	return result, nil
 }
 
 // Delete removes a value.

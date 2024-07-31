@@ -7,7 +7,7 @@ type Cache struct {
 	data map[string]cacheObject
 }
 
-// cacheObject struct to store value and expiration time.
+// cacheObject struct to store value and expired in Cache.
 type cacheObject struct {
 	value   interface{}
 	expired int64

@@ -2,6 +2,7 @@ package cache
 
 import "time"
 
+// LaunchCleaner periodically removes expired cache data.
 func (c *Cache) LaunchCleaner(interval time.Duration) {
 	go func() {
 		for range time.Tick(interval) {

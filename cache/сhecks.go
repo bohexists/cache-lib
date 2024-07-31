@@ -13,6 +13,7 @@ func validateKey(key string) error {
 	return nil
 }
 
+// isExpired checks if the object is expired.
 func isExpired(object cacheObject) bool {
 	return time.Now().UnixNano() > object.expired
 }

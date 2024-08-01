@@ -1,115 +1,118 @@
 # Cache Library
-================================
 
-## Description
+Cache Library is a simple in-memory caching solution for Go, providing basic cache operations with TTL (time-to-live) functionality.
 
-This is a basic in-memory cache library for storing data in a Go application. It provides methods to set, get, and delete values.
+## Features
+
+- Set and get cache values with expiration times.
+- Delete cache values.
+- Check for the existence of cache keys.
+- List all cache keys.
+- Periodically clean up expired cache entries.
 
 ## Installation
 
-To install the cache library, use the following command:
+To install the Cache Library, use the following command:
 
 ```sh
-go get -u github.com/yourusername/cache
+go get -u <module-name>
 ```
 
-Replace `yourusername` with your actual GitHub username or the repository URL where your library is hosted.
+## Usage
 
-## Example #1
+Here's how you can use the Cache Library in your project:
+
+### Example
 
 ```go
 package main
 
 import (
-    "fmt"
-    "github.com/yourusername/cache" // Replace with the correct import path
+	"fmt"
+	"time"
+
+	"<module-name>/cache"
 )
 
 func main() {
-    // Create a new cache
-    c := cache.New()
+	// Create a new cache
+	c := cache.New()
 
-    // Set values in the cache
-    c.Set("name", "John")
-    c.Set("age", 30)
+	// Set a value in the cache with a TTL of 5 seconds
+	err := c.Set("key1", "value1", 5*time.Second)
+	if err != nil {
+		fmt.Println("Error setting value:", err)
+		return
+	}
 
-    // Get values from the cache
-    name := c.Get("name")
-    age := c.Get("age")
+	// Retrieve the value from the cache
+	value, err := c.Get("key1")
+	if err != nil {
+		fmt.Println("Error getting value:", err)
+		return
+	}
+	fmt.Println("Retrieved value:", value)
 
-    fmt.Println("Name:", name) // Output: Name: John
-    fmt.Println("Age:", age)   // Output: Age: 30
+	// Check if the key exists
+	exists := c.Exists("key1")
+	fmt.Println("Key exists:", exists)
 
-    // Delete a value from the cache
-    c.Delete("name")
-    name = c.Get("name")
+	// List all keys
+	keys, err := c.Keys()
+	if err != nil {
+		fmt.Println("Error getting keys:", err)
+		return
+	}
+	fmt.Println("All keys:", keys)
 
-    if name == nil {
-        fmt.Println("Name not found") // Output: Name not found
-    }
-}
-```
+	// Launch the cleaner to remove expired cache entries every 10 seconds
+	c.LaunchCleaner(10 * time.Second)
 
-## Example #2
+	// Wait for 6 seconds to let the key expire
+	time.Sleep(6 * time.Second)
 
-```go
-package main
+	// Try to retrieve the expired value
+	value, err = c.Get("key1")
+	if err != nil {
+		fmt.Println("Error getting value:", err)
+	} else {
+		fmt.Println("Retrieved value:", value)
+	}
 
-import (
-    "fmt"
-    "github.com/yourusername/cache" // Replace with the correct import path
-)
-
-func main() {
-    // Create a new cache
-    c := cache.New()
-
-    // Set multiple values in the cache
-    c.Set("city", "New York")
-    c.Set("country", "USA")
-
-    // Retrieve and print values
-    city := c.Get("city")
-    country := c.Get("country")
-
-    fmt.Println("City:", city)       // Output: City: New York
-    fmt.Println("Country:", country) // Output: Country: USA
-
-    // Delete values from the cache
-    c.Delete("city")
-    c.Delete("country")
-
-    // Attempt to retrieve deleted values
-    city = c.Get("city")
-    if city == nil {
-        fmt.Println("City not found") // Output: City not found
-    }
-
-    country = c.Get("country")
-    if country == nil {
-        fmt.Println("Country not found") // Output: Country not found
-    }
+	// Check if the key exists after expiration
+	exists = c.Exists("key1")
+	fmt.Println("Key exists:", exists)
 }
 ```
 
 ## API
 
-### `New() Cache`
-Creates and returns a new Cache instance.
+### Cache
 
-### `Set(key string, value interface{})`
-Adds a value to the cache with the specified key.
+#### `func New() *Cache`
 
-- **key**: The key for the cache entry.
-- **value**: The value to store in the cache.
+Creates and returns a new cache.
 
-### `Get(key string) interface{}`
-Retrieves a value from the cache for the specified key.
+#### `func (c *Cache) Set(key string, value interface{}, ttl time.Duration) error`
 
-- **key**: The key for the cache entry.
-- **returns**: The value stored in the cache, or `nil` if the key does not exist.
+Sets a value in the cache with a specified TTL.
 
-### `Delete(key string)`
-Removes a value from the cache for the specified key.
+#### `func (c *Cache) Get(key string) (interface{}, error)`
 
-- **key**: The key for the cache entry to be removed.
+Retrieves a value from the cache.
+
+#### `func (c *Cache) Delete(key string) error`
+
+Deletes a value from the cache.
+
+#### `func (c *Cache) Exists(key string) bool`
+
+Checks if a key exists in the cache.
+
+#### `func (c *Cache) Keys() ([]string, error)`
+
+Returns a list of all keys in the cache.
+
+#### `func (c *Cache) LaunchCleaner(interval time.Duration)`
+
+Launches a cleaner that periodically removes expired cache entries.

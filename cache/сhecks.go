@@ -17,3 +17,11 @@ func validateKey(key string) error {
 func isExpired(object cacheObject) bool {
 	return time.Now().UnixNano() > object.expired
 }
+
+// checkCacheSize checks size exceeds the maximum limit.
+func checkCacheSize(data map[string]cacheObject, maxSize int) error {
+	if maxSize > 0 && len(data) >= maxSize {
+		return errors.New("cache size exceeds maximum limit")
+	}
+	return nil
+}

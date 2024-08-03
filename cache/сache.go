@@ -39,11 +39,11 @@ func (c *Cache) Set(key string, value interface{}, ttl time.Duration) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if err = validateKey(key); err != nil {
+	if err := validateKey(key); err != nil {
 		return err
 	}
 
-	if err = checkCacheSize(c.data, c.maxSize); err != nil {
+	if err := checkCacheSize(c.data, c.maxSize); err != nil {
 		return err
 	}
 
@@ -61,8 +61,7 @@ func (c *Cache) Get(key string) (interface{}, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	err := validateKey(key)
-	if err != nil {
+	if err := validateKey(key); err != nil {
 		return nil, err
 	}
 
@@ -80,8 +79,7 @@ func (c *Cache) Delete(key string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	err := validateKey(key)
-	if err != nil {
+	if err := validateKey(key); err != nil {
 		return err
 	}
 	delete(c.data, key)
@@ -94,8 +92,7 @@ func (c *Cache) Exists(key string) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	err := validateKey(key)
-	if err != nil {
+	if err := validateKey(key); err != nil {
 		return false
 	}
 	_, exists := c.data[key]

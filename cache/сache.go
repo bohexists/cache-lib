@@ -7,14 +7,16 @@ import (
 
 // CacheConfig holds the configuration for the Cache.
 type CacheConfig struct {
-	MaxSize int // Maximum number of Object in the Cache.
+	MaxSize    int           // Maximum number of Object in the Cache.
+	DefaultTTL time.Duration // Default TTL for cache objects.
 }
 
 // Cache is a basic in-memory storage for data.
 type Cache struct {
-	data    map[string]cacheObject
-	mu      sync.RWMutex
-	maxSize int
+	data       map[string]cacheObject
+	mu         sync.RWMutex
+	maxSize    int
+	defaultTTL time.Duration
 }
 
 // cacheObject struct to store value and expiration in Cache.
@@ -25,16 +27,17 @@ type cacheObject struct {
 }
 
 // New creates and returns a new Cache.
-func New(сonfig CacheConfig) *Cache {
+func New(config CacheConfig) *Cache {
 	// Create a variable result
 	return &Cache{
-		data:    make(map[string]cacheObject),
-		maxSize: сonfig.MaxSize,
+		data:       make(map[string]cacheObject),
+		maxSize:    config.MaxSize,
+		defaultTTL: config.DefaultTTL,
 	}
 }
 
 // Set adds a value.
-func (c *Cache) Set(key string, value interface{}, ttl time.Duration) error {
+func (c *Cache) Set(key string, value interface{}, ttl ...time.Duration) error {
 	// Lock for writing
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -47,10 +50,14 @@ func (c *Cache) Set(key string, value interface{}, ttl time.Duration) error {
 		return err
 	}
 
-	expired := time.Now().Add(ttl).UnixNano()
+	expired := time.Now().Add(c.defaultTTL)
+	if len(ttl) > 0 {
+		expired = time.Now().Add(ttl[0])
+	}
+
 	c.data[key] = cacheObject{
 		value:   value,
-		expired: expired,
+		expired: expired.UnixNano(),
 	}
 	return nil
 }
@@ -65,10 +72,7 @@ func (c *Cache) Get(key string) (interface{}, error) {
 		return nil, err
 	}
 
-	result, exists := c.data[key]
-	if !exists || isExpired(result) {
-		return nil, nil // or a specific error indicating the key does not exist or is expired
-	}
+	result := c.data[key]
 
 	return result.value, nil
 }

@@ -6,13 +6,14 @@ import "time"
 func (c *Cache) LaunchCleaner(interval time.Duration) {
 	go func() {
 		for range time.Tick(interval) {
-			c.mu.Lock() // Заблокировать доступ для записи
-			for key, object := range c.data {
-				if isExpired(object) {
+			c.mu.Lock()
+			for key, elem := range c.data {
+				if isExpired(elem.Value.(*cacheObject)) {
+					c.ll.Remove(elem)
 					delete(c.data, key)
 				}
 			}
-			c.mu.Unlock() // Разблокировать доступ
+			c.mu.Unlock()
 		}
 	}()
 }

@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"container/list"
 	"errors"
 	"time"
 )
@@ -14,12 +15,12 @@ func validateKey(key string) error {
 }
 
 // isExpired checks if the object is expired.
-func isExpired(object cacheObject) bool {
+func isExpired(object *cacheObject) bool {
 	return time.Now().UnixNano() > object.expired
 }
 
-// checkCacheSize checks size exceeds the maximum limit.
-func checkCacheSize(data map[string]cacheObject, maxSize int) error {
+// checkCacheSize checks if the cache size exceeds the maximum limit.
+func checkCacheSize(data map[string]*list.Element, maxSize int) error {
 	if maxSize > 0 && len(data) >= maxSize {
 		return errors.New("cache size exceeds maximum limit")
 	}

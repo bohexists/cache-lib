@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"container/list"
 	"sync"
 	"time"
 )
@@ -13,10 +14,11 @@ type CacheConfig struct {
 
 // Cache is a basic in-memory storage for data.
 type Cache struct {
-	data       map[string]cacheObject
+	data       map[string]*list.Element
 	mu         sync.RWMutex
 	maxSize    int
 	defaultTTL time.Duration
+	ll         *list.List
 }
 
 // cacheObject struct to store value and expiration in Cache.
@@ -28,11 +30,11 @@ type cacheObject struct {
 
 // New creates and returns a new Cache.
 func New(config CacheConfig) *Cache {
-	// Create a variable result
 	return &Cache{
-		data:       make(map[string]cacheObject),
+		data:       make(map[string]*list.Element),
 		maxSize:    config.MaxSize,
 		defaultTTL: config.DefaultTTL,
+		ll:         list.New(),
 	}
 }
 
@@ -46,19 +48,29 @@ func (c *Cache) Set(key string, value interface{}, ttl ...time.Duration) error {
 		return err
 	}
 
-	if err := checkCacheSize(c.data, c.maxSize); err != nil {
-		return err
-	}
-
 	expired := time.Now().Add(c.defaultTTL)
 	if len(ttl) > 0 {
 		expired = time.Now().Add(ttl[0])
 	}
 
-	c.data[key] = cacheObject{
-		value:   value,
-		expired: expired.UnixNano(),
+	// Remove the oldest element if the cache size exceeds maxSize
+	if c.maxSize > 0 && c.ll.Len() >= c.maxSize {
+		c.evictOldest()
 	}
+
+	if elem, exists := c.data[key]; exists {
+		c.ll.MoveToFront(elem)
+		elem.Value.(*cacheObject).value = value
+		elem.Value.(*cacheObject).expired = expired.UnixNano()
+	} else {
+		elem := c.ll.PushFront(&cacheObject{
+			key:     key,
+			value:   value,
+			expired: expired.UnixNano(),
+		})
+		c.data[key] = elem
+	}
+
 	return nil
 }
 
@@ -72,9 +84,13 @@ func (c *Cache) Get(key string) (interface{}, error) {
 		return nil, err
 	}
 
-	result := c.data[key]
+	elem, exists := c.data[key]
+	if !exists || isExpired(elem.Value.(*cacheObject)) {
+		return nil, nil // or a specific error indicating the key does not exist or is expired
+	}
 
-	return result.value, nil
+	c.ll.MoveToFront(elem)
+	return elem.Value.(*cacheObject).value, nil
 }
 
 // Delete removes a value.
@@ -86,7 +102,12 @@ func (c *Cache) Delete(key string) error {
 	if err := validateKey(key); err != nil {
 		return err
 	}
-	delete(c.data, key)
+
+	if elem, exists := c.data[key]; exists {
+		c.ll.Remove(elem)
+		delete(c.data, key)
+	}
+
 	return nil
 }
 
@@ -114,4 +135,13 @@ func (c *Cache) Keys() ([]string, error) {
 		result = append(result, key)
 	}
 	return result, nil
+}
+
+// evictOldest removes the oldest element from the cache.
+func (c *Cache) evictOldest() {
+	elem := c.ll.Back()
+	if elem != nil {
+		c.ll.Remove(elem)
+		delete(c.data, elem.Value.(*cacheObject).key)
+	}
 }

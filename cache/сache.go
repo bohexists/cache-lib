@@ -6,19 +6,28 @@ import (
 	"time"
 )
 
+type EvictionType int
+
+const (
+	FILO EvictionType = iota
+	LRU
+)
+
 // CacheConfig holds the configuration for the Cache.
 type CacheConfig struct {
-	MaxSize    int           // Maximum number of Object in the Cache.
-	DefaultTTL time.Duration // Default TTL for cache objects.
+	MaxSize      int           // Maximum number of Object in the Cache.
+	DefaultTTL   time.Duration // Default TTL for cache objects.
+	EvictionType EvictionType  // Eviction strategy type.
 }
 
 // Cache is a basic in-memory storage for data.
 type Cache struct {
-	data       map[string]*list.Element
-	mu         sync.RWMutex
-	maxSize    int
-	defaultTTL time.Duration
-	ll         *list.List
+	data         map[string]*list.Element
+	mu           sync.RWMutex
+	maxSize      int
+	defaultTTL   time.Duration
+	ll           *list.List
+	evictionType EvictionType
 }
 
 // cacheObject struct to store value and expiration in Cache.
@@ -31,10 +40,11 @@ type cacheObject struct {
 // New creates and returns a new Cache.
 func New(config CacheConfig) *Cache {
 	return &Cache{
-		data:       make(map[string]*list.Element),
-		maxSize:    config.MaxSize,
-		defaultTTL: config.DefaultTTL,
-		ll:         list.New(),
+		data:         make(map[string]*list.Element),
+		maxSize:      config.MaxSize,
+		defaultTTL:   config.DefaultTTL,
+		ll:           list.New(),
+		evictionType: config.EvictionType,
 	}
 }
 
@@ -55,7 +65,7 @@ func (c *Cache) Set(key string, value interface{}, ttl ...time.Duration) error {
 
 	// Remove the oldest element if the cache size exceeds maxSize
 	if c.maxSize > 0 && c.ll.Len() >= c.maxSize {
-		c.evictOldest()
+		c.evict()
 	}
 
 	if elem, exists := c.data[key]; exists {
@@ -135,13 +145,4 @@ func (c *Cache) Keys() ([]string, error) {
 		result = append(result, key)
 	}
 	return result, nil
-}
-
-// evictOldest removes the oldest element from the cache.
-func (c *Cache) evictOldest() {
-	elem := c.ll.Back()
-	if elem != nil {
-		c.ll.Remove(elem)
-		delete(c.data, elem.Value.(*cacheObject).key)
-	}
 }

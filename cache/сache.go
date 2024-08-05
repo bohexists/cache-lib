@@ -6,10 +6,8 @@ import (
 	"time"
 )
 
-type EvictionType int
-
 const (
-	FILO EvictionType = iota
+	FILO = iota
 	LRU
 )
 

@@ -15,7 +15,7 @@ const (
 type CacheConfig struct {
 	MaxSize      int           // Maximum number of Object in the Cache.
 	DefaultTTL   time.Duration // Default TTL for cache objects.
-	EvictionType EvictionType  // Eviction strategy type.
+	EvictionType int           // Eviction strategy type.
 }
 
 // Cache is a basic in-memory storage for data.
@@ -25,7 +25,7 @@ type Cache struct {
 	maxSize      int
 	defaultTTL   time.Duration
 	ll           *list.List
-	evictionType EvictionType
+	evictionType int
 }
 
 // cacheObject struct to store value and expiration in Cache.
@@ -143,4 +143,14 @@ func (c *Cache) Keys() ([]string, error) {
 		result = append(result, key)
 	}
 	return result, nil
+}
+
+// Clear removes all object from cache.
+func (c *Cache) Clear() {
+	// Lock for writing
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.data = make(map[string]*list.Element)
+	c.ll.Init()
 }

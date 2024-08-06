@@ -7,6 +7,8 @@ func (c *Cache) evict() {
 		c.evictOldest()
 	case LRU:
 		c.evictLeastRecentlyUsed()
+	case FIFO:
+		c.evictFirst()
 	}
 }
 
@@ -22,6 +24,15 @@ func (c *Cache) evictOldest() {
 // evictLeastRecentlyUsed removes the least recently used element from the cache (LRU strategy).
 func (c *Cache) evictLeastRecentlyUsed() {
 	elem := c.ll.Back()
+	if elem != nil {
+		c.ll.Remove(elem)
+		delete(c.data, elem.Value.(*cacheObject).key)
+	}
+}
+
+// evictFirst removes the first element from the cache (FIFO strategy).
+func (c *Cache) evictFirst() {
+	elem := c.ll.Front()
 	if elem != nil {
 		c.ll.Remove(elem)
 		delete(c.data, elem.Value.(*cacheObject).key)

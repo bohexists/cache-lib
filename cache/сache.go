@@ -9,6 +9,7 @@ import (
 const (
 	FILO = iota
 	LRU
+	FIFO
 )
 
 // CacheConfig holds the configuration for the Cache.

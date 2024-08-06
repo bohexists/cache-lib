@@ -154,3 +154,11 @@ func (c *Cache) Clear() {
 	c.data = make(map[string]*list.Element)
 	c.ll.Init()
 }
+
+func (c *Cache) Size() int {
+	// Lock for reading
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return len(c.data)
+}

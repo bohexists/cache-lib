@@ -1,14 +1,16 @@
 # Cache Library
 
-Cache Library is a simple in-memory caching solution for Go, providing basic cache operations with TTL (time-to-live) functionality.
+Cache Library is a simple in-memory caching solution for Go, providing basic cache operations with TTL (time-to-live) functionality and multiple eviction strategies.
 
 ## Features
 
-- Set and get cache values with expiration times.
-- Delete cache values.
-- Check for the existence of cache keys.
-- List all cache keys.
-- Periodically clean up expired cache entries.
+- **Set and Get**: Store and retrieve values with optional expiration times.
+- **Delete**: Remove cache entries.
+- **Check Existence**: Verify if a key exists in the cache.
+- **List Keys**: Retrieve all keys stored in the cache.
+- **Eviction Strategies**: Support for FILO (First-In-Last-Out), LRU (Least Recently Used), and FIFO (First-In-First-Out) eviction strategies.
+- **TTL Management**: Automatic removal of expired cache entries.
+- **Periodic Cleanup**: Launch a background cleaner to remove expired entries at regular intervals.
 
 ## Installation
 
@@ -35,8 +37,12 @@ import (
 )
 
 func main() {
-	// Create a new cache
-	c := cache.New()
+	// Create a new cache with specific configuration
+	c := cache.New(cache.CacheConfig{
+		MaxSize:      100,           // Maximum number of elements in cache
+		DefaultTTL:   5 * time.Minute, // Default TTL for cache entries
+		EvictionType: cache.LRU,     // Eviction strategy: FILO, LRU, or FIFO
+	})
 
 	// Set a value in the cache with a TTL of 5 seconds
 	err := c.Set("key1", "value1", 5*time.Second)
@@ -89,17 +95,17 @@ func main() {
 
 ### Cache
 
-#### `func New() *Cache`
+#### `func New(config CacheConfig) *Cache`
 
-Creates and returns a new cache.
+Creates and returns a new cache with the specified configuration.
 
-#### `func (c *Cache) Set(key string, value interface{}, ttl time.Duration) error`
+#### `func (c *Cache) Set(key string, value interface{}, ttl ...time.Duration) error`
 
-Sets a value in the cache with a specified TTL.
+Sets a value in the cache with a specified TTL. If no TTL is provided, the default TTL is used.
 
 #### `func (c *Cache) Get(key string) (interface{}, error)`
 
-Retrieves a value from the cache.
+Retrieves a value from the cache. Returns `nil` if the key does not exist or is expired.
 
 #### `func (c *Cache) Delete(key string) error`
 
@@ -113,6 +119,33 @@ Checks if a key exists in the cache.
 
 Returns a list of all keys in the cache.
 
+#### `func (c *Cache) Clear()`
+
+Removes all objects from the cache.
+
+#### `func (c *Cache) Size() int`
+
+Returns the number of elements currently stored in the cache.
+
 #### `func (c *Cache) LaunchCleaner(interval time.Duration)`
 
 Launches a cleaner that periodically removes expired cache entries.
+
+## Eviction Strategies
+
+The library supports three eviction strategies:
+
+- **FILO (First-In-Last-Out)**: Removes the oldest element when the cache is full.
+- **LRU (Least Recently Used)**: Removes the least recently used element when the cache is full.
+- **FIFO (First-In-First-Out)**: Removes the first element added to the cache when the cache is full.
+
+To specify an eviction strategy, set the `EvictionType` field in the `CacheConfig` when creating a new cache:
+
+```go
+c := cache.New(cache.CacheConfig{
+    MaxSize:      100,
+    DefaultTTL:   5 * time.Minute,
+    EvictionType: cache.LRU, // Choose between FILO, LRU, FIFO
+})
+```
+
